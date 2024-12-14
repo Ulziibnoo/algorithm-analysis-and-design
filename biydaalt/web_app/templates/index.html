@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Монгол Текст Шалгагч</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f1f1f1;
+        color: #333;
+      }
+      .container {
+        margin: 20px auto;
+        max-width: 900px;
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      h1 {
+        font-size: 30px;
+        color: #2c3e50;
+      }
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        padding: 15px;
+        font-size: 18px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        outline: none;
+        background: #fafafa;
+        resize: vertical;
+      }
+      textarea:focus {
+        border-color: #3498db;
+      }
+      .button-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+      .btn {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #2980b9;
+      }
+      #textDisplay {
+        width: 100%;
+        min-height: 150px;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f4f6f8;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        text-align: left;
+      }
+      .misspelled {
+        text-decoration: underline wavy red;
+        cursor: pointer;
+      }
+      #suggestions {
+        position: absolute;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        display: none;
+        z-index: 1000;
+        padding: 5px;
+        max-width: 200px;
+        overflow-y: auto;
+      }
+      .suggestion-item {
+        padding: 5px;
+        cursor: pointer;
+        border-bottom: 1px solid #f4f4f4;
+      }
+      .suggestion-item:last-child {
+        border-bottom: none;
+      }
+      .suggestion-item:hover {
+        background: #f0f0f0;
+      }
+      #stats {
+        padding: 15px;
+        background: #fafafa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 20px;
+        text-align: left;
+      }
+      #stats h3 {
+        color: #2c3e50;
+      }
+      #stats ul {
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Монгол Текст Шалгагч</h1>
+
+      <div class="button-container">
+        <button class="btn" onclick="copyText()">Copy</button>
+        <button class="btn" onclick="pasteText()">Paste</button>
+        <button class="btn" onclick="eraseText()">Erase</button>
+      </div>
+
+      <textarea id="textInput" placeholder="Текстээ энд бичнэ үү..."></textarea>
+      <div id="textDisplay"></div>
+      <div id="suggestions"></div>
+      <div id="stats"></div>
+    </div>
+
+    <script>
+      const textInput = document.getElementById("textInput");
+      const textDisplay = document.getElementById("textDisplay");
+      const suggestionsDiv = document.getElementById("suggestions");
+      const statsDiv = document.getElementById("stats");
+      let currentMisspelled = [];
+
+      textInput.addEventListener("input", debounce(checkText, 500));
+
+      function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+      }
+
+      function checkText() {
+        const text = textInput.value;
+        fetch("/check", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: text }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            currentMisspelled = data.misspelled;
+            highlightMisspelledWords(text, data.misspelled);
+            updateStats(data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            statsDiv.innerHTML =
+              "<p style='color: red;'>Сервертэй холбогдох боломжгүй байна!</p>";
+          });
+      }
+
+      function highlightMisspelledWords(text, misspelled) {
+        let highlightedText = text;
+
+        for (let i = misspelled.length - 1; i >= 0; i--) {
+          const { word, start, end } = misspelled[i];
+          const span =
+            `<span class="misspelled" data-index="${i}">` +
+            text.substring(start, end) +
+            "</span>";
+          highlightedText =
+            highlightedText.substring(0, start) +
+            span +
+            highlightedText.substring(end);
+        }
+
+        textDisplay.innerHTML = highlightedText;
+
+        document.querySelectorAll(".misspelled").forEach((span) => {
+          span.addEventListener("contextmenu", showSuggestions);
+        });
+      }
+
+      function showSuggestions(e) {
+        e.preventDefault();
+        const index = parseInt(e.target.dataset.index);
+        const word = currentMisspelled[index];
+
+        suggestionsDiv.innerHTML = "";
+        word.suggestions.forEach((suggestion) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = suggestion;
+          div.onclick = () => replaceMisspelledWord(word, suggestion);
+          suggestionsDiv.appendChild(div);
+        });
+
+        const rect = e.target.getBoundingClientRect();
+        suggestionsDiv.style.left = `${rect.left}px`;
+        suggestionsDiv.style.top = `${rect.bottom + window.scrollY}px`;
+        suggestionsDiv.style.display = "block";
+      }
+
+      function replaceMisspelledWord(word, suggestion) {
+        const text = textInput.value;
+        textInput.value =
+          text.substring(0, word.start) + suggestion + text.substring(word.end);
+
+        suggestionsDiv.style.display = "none";
+        checkText();
+      }
+
+      function updateStats(data) {
+        statsDiv.innerHTML = `
+          <h3>Текстийн шинжилгээ:</h3>
+          <p>Нийт ялгаатай үг: ${data.unique_words}</p>
+          <h4>Хамгийн их давтагдсан 10 үг:</h4>
+          <ul>
+            ${data.top_words
+              .map(([word, count]) => `<li>${word}: ${count} удаа</li>`)
+              .join("")}
+          </ul>
+          <p>Текстийн ангилал: ${data.category}</p>
+        `;
+      }
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#suggestions")) {
+          suggestionsDiv.style.display = "none";
+        }
+      });
+
+      // Copy function
+      function copyText() {
+        textInput.select();
+        document.execCommand("copy");
+      }
+
+      // Paste function
+      function pasteText() {
+        navigator.clipboard.readText().then((text) => {
+          textInput.value = text;
+          checkText();
+        });
+      }
+
+      // Erase function
+      function eraseText() {
+        textInput.value = "";
+        checkText();
+      }
+    </script>
+  </body>
+</html>

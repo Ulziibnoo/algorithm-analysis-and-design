@@ -1,0 +1,21 @@
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 137-200-397
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 137-200-397
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:39:48] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:09] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:11] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:12] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:16] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:26] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:27] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:28] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:30] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:31] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:34] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:36] "POST /check HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [14/Dec/2024 20:41:38] "POST /check HTTP/1.1" 200 -
