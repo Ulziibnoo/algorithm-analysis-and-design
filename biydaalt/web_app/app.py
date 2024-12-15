@@ -1,3 +1,6 @@
+#B221910008 Э.Өлзийбаяр
+#B221910002 Б.Насанжаргал
+
 from flask import Flask, request, jsonify, render_template
 import re
 from collections import Counter
